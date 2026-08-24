@@ -1,4 +1,4 @@
-import fitz  # PyMuPDF
+import pymupdf as fitz  # PyMuPDF (new package name)
 import logging
 from fastapi import UploadFile
 import io
