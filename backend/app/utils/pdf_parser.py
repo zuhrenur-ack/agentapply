@@ -1,4 +1,4 @@
-import pymupdf as fitz  # PyMuPDF (new package name)
+from pypdf import PdfReader
 import logging
 from fastapi import UploadFile
 import io
@@ -10,16 +10,12 @@ async def extract_text_from_pdf(file: UploadFile) -> str:
     try:
         content = await file.read()
         
-        # Dosyayı hafızada (memory) aç
-        pdf_document = fitz.open(stream=content, filetype="pdf")
-        
+        # pypdf ile oku (saf Python, derleme gerektirmez)
+        reader = PdfReader(io.BytesIO(content))
         text = ""
-        for page_num in range(len(pdf_document)):
-            page = pdf_document.load_page(page_num)
-            text += page.get_text("text") + "\n"
+        for page in reader.pages:
+            text += page.extract_text() + "\n"
             
-        pdf_document.close()
-        
         if not text.strip():
             raise ValueError("PDF'den metin çıkarılamadı (Dosya boş veya taranmış resim olabilir).")
             
