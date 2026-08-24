@@ -1,0 +1,16 @@
+# AgentApply — .gitignore
+backend/venv/
+backend/__pycache__/
+backend/**/__pycache__/
+backend/**/*.pyc
+backend/.env
+backend/.env.local
+frontend/node_modules/
+frontend/dist/
+frontend/.env
+frontend/.env.local
+.vscode/
+.idea/
+*.DS_Store
+Thumbs.db
+*.log
