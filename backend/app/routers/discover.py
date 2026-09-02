@@ -83,30 +83,30 @@ async def discover_jobs(authorization: str = Header(None)):
             source: str = Field(description="linkedin veya kariyer")
 
         class DiscoverResult(BaseModel):
-            jobs: list[JobListing] = Field(description="6 adet iş ilanı")
+            jobs: list[JobListing] = Field(description="En uygun 3 adet iş ilanı")
 
         llm = ChatGroq(
             groq_api_key=settings.GROQ_API_KEY,
             model="openai/gpt-oss-120b",
+            temperature=0.3
         )
         structured_llm = llm.with_structured_output(DiscoverResult)
 
-        prompt = f"""Aşağıdaki CV'yi dikkatlice oku. Bu kişinin meslek alanını, deneyim yılını ve yetkinliklerini analiz et.
-
-Sonra bu kişinin GERÇEKTEN İLGİLENEBİLECEĞİ, kendi alanına uygun 6 farklı iş ilanı oluştur.
-Örneğin CV sahibi avukatsa avukatlık/hukuk ilanları, pazarlamacıysa pazarlama ilanları, yazılımcıysa yazılım ilanları olmalı.
+        prompt = f"""Aşağıdaki CV'yi oku ve kişinin mesleğini (örneğin: Avukat, Yazılımcı, Muhasebeci) tespit et.
+Daha sonra bu mesleğe %100 uygun 3 farklı iş ilanı oluştur.
+Eğer CV sahibi Hukuk/Avukat ise, oluşturduğun ilanlar "Kıdemli Avukat", "Hukuk Müşaviri" gibi olsun.
 
 Her ilan için:
-- title: İlan başlığı (Türkçe)
-- company: Türkiye'deki gerçek veya gerçekçi bir şirket adı
-- location: Şehir ve çalışma şekli
-- tags: 3 kısa anahtar kelime
-- match_score: 0-100 arası uyum puanı. CV'deki deneyim yılı, beceriler ve eğitime göre puanla. En az 2 ilan %60 üstü olsun.
-- match_reasoning: Tek kısa cümle. Eksik olan veya uyumlu olan 1 somut şeyi belirt. Örneğin: "İstenen 5 yıl deneyim, CV'de 2 yıl var." veya "Aranan Excel ve SAP yetkinlikleri CV'de mevcut."
-- source: "linkedin" veya "kariyer" (rastgele dağıt)
+- title: İlan başlığı
+- company: Şirket adı (Örn: XYZ Hukuk Bürosu, ABC Teknoloji)
+- location: Şehir
+- tags: 3 anahtar kelime (Örn: ["İdare Hukuku", "Dava Takibi", "Danışmanlık"])
+- match_score: CV'ye göre 70-95 arası mantıklı bir skor.
+- match_reasoning: Neden uyumlu olduğuna dair EN FAZLA 10 kelimelik kısacık bir cümle. (Örn: 'İstenen 3 yıl tecrübe CV'nizle eşleşiyor.')
+- source: 'linkedin' veya 'kariyer'
 
 CV:
-{cv_text[:3000]}"""
+{cv_text[:2500]}"""
 
         result = structured_llm.invoke(prompt)
         jobs_list = []
@@ -135,7 +135,7 @@ CV:
                 "location": "Türkiye",
                 "tags": [keyword],
                 "match_score": 0,
-                "match_reasoning": "AI bağlantı hatası. Linklere tıklayarak ilanları görebilirsin.",
+                "match_reasoning": f"AI hatası: {str(e)}",
                 "source": "linkedin",
                 "url": _build_url(keyword, "linkedin"),
             }
