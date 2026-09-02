@@ -5,6 +5,7 @@ import Dashboard from './pages/Dashboard'
 import Applications from './pages/Applications'
 import AIAssistant from './pages/AIAssistant'
 import Profile from './pages/Profile'
+import Discover from './pages/Discover'
 import { AuthProvider } from './context/AuthContext'
 
 /**
@@ -20,6 +21,7 @@ function App() {
             <Routes>
               <Route path="/" element={<Dashboard />} />
               <Route path="/applications" element={<Applications />} />
+              <Route path="/discover" element={<Discover />} />
               <Route path="/ai" element={<AIAssistant />} />
               <Route path="/profile" element={<Profile />} />
             </Routes>

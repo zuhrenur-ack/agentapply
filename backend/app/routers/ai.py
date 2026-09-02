@@ -31,3 +31,24 @@ async def interview_coach(file: UploadFile = File(...), position: str = Form(...
     """Mülakat soruları üretir."""
     result = await ai_service_instance.interview_coach(file, position)
     return APIResponse(**result)
+
+
+@router.get("/skill-gap", response_model=APIResponse)
+async def skill_gap_analysis():
+    """Kullanıcının yetenekleri ile piyasa gereksinimlerini kıyaslar."""
+    # Şimdilik mock veri dönüyoruz, ileride kullanıcının kayıtlı CV'si ile DB'deki ilanlar analiz edilebilir.
+    mock_data = {
+        "radar_data": [
+            {"subject": "React", "A": 90, "B": 85, "fullMark": 100},
+            {"subject": "Python", "A": 85, "B": 70, "fullMark": 100},
+            {"subject": "TypeScript", "A": 30, "B": 90, "fullMark": 100},
+            {"subject": "SQL", "A": 75, "B": 80, "fullMark": 100},
+            {"subject": "AWS", "A": 20, "B": 65, "fullMark": 100},
+        ],
+        "recommendations": [
+            "React bilgin çok güçlü ancak başvurduğun ilanların %70'i TypeScript istiyor. TypeScript öğrenmeye öncelik vermelisin.",
+            "Python yeteneklerin piyasa ortalamasının üzerinde, bunu mülakatlarda kesinlikle öne çıkarmalısın.",
+            "AWS ve Bulut teknolojilerinde eksiğin var, temel bir sertifika alman şansını artıracaktır."
+        ]
+    }
+    return {"success": True, "data": mock_data, "is_mock": True}

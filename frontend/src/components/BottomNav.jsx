@@ -1,9 +1,10 @@
 import { useLocation, useNavigate } from 'react-router-dom'
-import { LayoutDashboard, FolderKanban, Sparkles, User } from 'lucide-react'
+import { LayoutDashboard, FolderKanban, Sparkles, User, Globe } from 'lucide-react'
 
 const navItems = [
   { path: '/',            label: 'Pano',     icon: LayoutDashboard },
   { path: '/applications',label: 'Başvurular',icon: FolderKanban },
+  { path: '/discover',    label: 'Keşfet',   icon: Globe },
   { path: '/ai',          label: 'AI',       icon: Sparkles },
   { path: '/profile',     label: 'Profil',   icon: User },
 ]

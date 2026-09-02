@@ -41,6 +41,7 @@ app.include_router(applications.router, prefix="/api")
 app.include_router(ai.router, prefix="/api")
 app.include_router(profile.router, prefix="/api")
 app.include_router(cover_letter.router, prefix="/api")
+app.include_router(discover.router, prefix="/api")
 
 
 @app.get("/health", tags=["Sistem"])

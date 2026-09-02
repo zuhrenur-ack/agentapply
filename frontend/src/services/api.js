@@ -99,6 +99,7 @@ export const aiAPI = {
       timeout: 90000,
     })
   },
+  skillGap: () => api.get('/ai/skill-gap'),
 }
 
 export const healthCheck = () => api.get('/health', { timeout: 10000 })
