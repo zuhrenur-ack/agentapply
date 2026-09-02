@@ -1,11 +1,13 @@
 import { useState, useEffect, useRef } from 'react'
 import { Upload, FileText, CheckCircle, Save, AlertCircle } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
+import { useApp } from '../context/AppContext'
 import api from '../services/api'
 
 export default function Profile() {
   const { user, getToken } = useAuth()
-  const [cvText, setCvText] = useState('')
+  const { cachedCV, setCachedCV, setCachedDiscover } = useApp()
+  const [cvText, setCvText] = useState(cachedCV || '')
   const [fileName, setFileName] = useState('')
   const [loading, setLoading] = useState(false)
   const [saving, setSaving] = useState(false)
@@ -15,7 +17,7 @@ export default function Profile() {
 
   // Kayıtlı CV'yi getir
   useEffect(() => {
-    if (!user) return
+    if (!user || cachedCV !== null) return
     const fetchCV = async () => {
       setLoading(true)
       try {
@@ -25,6 +27,7 @@ export default function Profile() {
         })
         if (res.data?.data?.content) {
           setCvText(res.data.data.content)
+          setCachedCV(res.data.data.content)
           setFileName(res.data.data.file_name || 'Kayıtlı CV')
         }
       } catch (e) {
@@ -77,6 +80,8 @@ export default function Profile() {
       if (res.data?.success) {
         setStatus('success')
         setMessage('CV başarıyla kaydedildi! ✅')
+        setCachedCV(cvText)
+        if (setCachedDiscover) setCachedDiscover(null) // CV changed, invalidate job search cache
       } else {
         setStatus('error')
         setMessage(res.data?.message || 'CV kaydedilemedi.')

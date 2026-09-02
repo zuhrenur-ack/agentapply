@@ -1,71 +1,18 @@
-"""Dış ilanları keşfetme ve AI eşleştirme (Adım 3)."""
+"""Dış ilanları keşfetme ve AI eşleştirme (Adım 3 — V2).
+
+CV'yi okuyan AI, kullanıcının alanına uygun gerçekçi ilanlar üretir,
+her biri için uyum puanı ve 1 cümlelik eksik/uyumlu analizi verir.
+Linkleri LinkedIn veya Kariyer.net arama sayfalarına yönlendirir.
+"""
 import logging
-import asyncio
+import urllib.parse
 from fastapi import APIRouter, Header, HTTPException
 from app.models.schemas import APIResponse
 from app.database.supabase_client import supabase
-from app.agents.job_matcher import JobMatcherAgent
+from app.config import settings
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/discover", tags=["Keşfet"])
-
-# Gerçek iş ilanları - LinkedIn ve Kariyer.net search link'leri ile
-EXTERNAL_JOBS = [
-    {
-        "id": "ext-1",
-        "company": "Trendyol",
-        "title": "Frontend Developer",
-        "location": "İstanbul (Uzaktan)",
-        "tags": ["React", "TypeScript", "Tailwind"],
-        "description": "React ve TypeScript kullanarak büyük ölçekli e-ticaret uygulamaları geliştiren, API entegrasyonlarına hakim frontend developer arıyoruz. Performans optimizasyonu ve code review süreçlerine katkı beklenmektedir.",
-        "url": "https://www.kariyer.net/is-ilanlari/frontend-developer"
-    },
-    {
-        "id": "ext-2",
-        "company": "Getir",
-        "title": "Backend Yazılım Mühendisi",
-        "location": "İstanbul",
-        "tags": ["Python", "FastAPI", "PostgreSQL"],
-        "description": "Python ve FastAPI ile yüksek trafikli mikroservisler geliştiren, PostgreSQL ve Redis konusunda deneyimli backend mühendisi arıyoruz. AWS veya GCP deneyimi artı olarak değerlendirilecektir.",
-        "url": "https://www.kariyer.net/is-ilanlari/backend-developer"
-    },
-    {
-        "id": "ext-3",
-        "company": "Insider",
-        "title": "Full Stack Developer",
-        "location": "Uzaktan (Remote)",
-        "tags": ["React", "Node.js", "MongoDB"],
-        "description": "React frontend ve Node.js backend kullanarak SaaS ürünler geliştiren, MongoDB deneyimi olan full-stack developer. Agile metodoloji ve CI/CD süreçlerine hakim olmalıdır.",
-        "url": "https://www.linkedin.com/jobs/search/?keywords=full+stack+developer&location=Turkey"
-    },
-    {
-        "id": "ext-4",
-        "company": "Peak Games",
-        "title": "Yapay Zeka / ML Mühendisi",
-        "location": "İstanbul (Hibrit)",
-        "tags": ["Python", "ML", "LLM", "LangChain"],
-        "description": "LLM ve generative AI alanında proje geliştirmiş, LangChain veya LlamaIndex deneyimi olan, Python ile makine öğrenmesi modelleri kurabilen mühendis arıyoruz.",
-        "url": "https://www.linkedin.com/jobs/search/?keywords=yapay+zeka+mühendisi&location=Turkey"
-    },
-    {
-        "id": "ext-5",
-        "company": "Yemeksepeti",
-        "title": "React Native Developer",
-        "location": "İstanbul",
-        "tags": ["React Native", "JavaScript", "Mobile"],
-        "description": "React Native ile iOS ve Android mobil uygulamalar geliştiren, JavaScript konusunda güçlü altyapısı olan mobil geliştirici. Redux veya Zustand ile state yönetimi deneyimi beklenmektedir.",
-        "url": "https://www.kariyer.net/is-ilanlari/react-native-developer"
-    },
-    {
-        "id": "ext-6",
-        "company": "Logo Yazılım",
-        "title": "DevOps / Cloud Mühendisi",
-        "location": "Gebze (Hibrit)",
-        "tags": ["AWS", "Docker", "Kubernetes", "CI/CD"],
-        "description": "AWS veya Azure üzerinde Kubernetes cluster yöneten, Docker ile konteyner altyapısı kuran, CI/CD pipeline geliştiren DevOps mühendisi. Terraform deneyimi avantajdır.",
-        "url": "https://www.linkedin.com/jobs/search/?keywords=devops+engineer&location=Turkey"
-    },
-]
 
 
 def _extract_user_id(authorization: str) -> str:
@@ -83,9 +30,18 @@ def _extract_user_id(authorization: str) -> str:
         raise HTTPException(status_code=401, detail="Token çözümlenemedi.")
 
 
+def _build_url(title: str, source: str) -> str:
+    """İlan başlığından LinkedIn veya Kariyer.net arama URL'si oluşturur."""
+    encoded = urllib.parse.quote(title)
+    if source == "linkedin":
+        return f"https://www.linkedin.com/jobs/search/?keywords={encoded}&location=T%C3%BCrkiye"
+    else:
+        return f"https://www.kariyer.net/is-ilanlari?arama={encoded}"
+
+
 @router.get("/jobs", response_model=APIResponse)
 async def discover_jobs(authorization: str = Header(None)):
-    """Kullanıcının CV'si ile dış ilanları eşleştirip skorlarıyla döner."""
+    """Kullanıcının CV'sine uygun ilanlar üretir ve skorlar."""
     if not authorization:
         raise HTTPException(status_code=401, detail="Yetkilendirme gerekli.")
 
@@ -101,38 +57,87 @@ async def discover_jobs(authorization: str = Header(None)):
         except Exception as e:
             logger.error(f"CV çekilirken hata: {e}")
 
-    jobs_with_scores = []
-
-    # CV yoksa skorlama yapma, "CV ekle" notu ile döndür
+    # CV yoksa uyarı döndür
     if not cv_text or len(cv_text.strip()) < 20:
-        for job in EXTERNAL_JOBS:
-            job_copy = dict(job)
-            job_copy["match_score"] = 0
-            job_copy["match_reasoning"] = "Uyum skoru için Profil sekmesinden CV'ni kaydet."
-            jobs_with_scores.append(job_copy)
-        return {"success": True, "data": jobs_with_scores, "is_mock": False}
+        return {
+            "success": True,
+            "data": [],
+            "message": "CV bulunamadı. Profil sekmesinden CV'ni kaydet.",
+            "is_mock": False
+        }
 
-    # 2. AI ile paralel eşleştirme
-    matcher = JobMatcherAgent()
+    # 2. Groq AI ile CV'ye uygun ilanlar üret
+    try:
+        from langchain_groq import ChatGroq
+        from langchain_core.messages import HumanMessage, SystemMessage
+        from pydantic import BaseModel, Field
+        import json
 
-    async def _match(job):
-        job_copy = dict(job)
-        try:
-            res = await matcher.match(cv_text, job["description"])
-            job_copy["match_score"] = res.get("score", 0)
-            # Sadece ilk cümleyi al — çok uzun olmasın
-            reasoning = res.get("reasoning", "Analiz edilemedi.")
-            job_copy["match_reasoning"] = reasoning.split(".")[0].strip() + "."
-        except Exception as e:
-            logger.error(f"Eşleştirme hatası {job['id']}: {e}")
-            job_copy["match_score"] = 0
-            job_copy["match_reasoning"] = "AI analiz hatası."
-        return job_copy
+        class JobListing(BaseModel):
+            title: str = Field(description="İş ilanı başlığı")
+            company: str = Field(description="Türkiye'deki gerçek veya gerçekçi bir şirket adı")
+            location: str = Field(description="Şehir ve çalışma modeli (Uzaktan/Hibrit/Ofis)")
+            tags: list[str] = Field(description="3 anahtar yetkinlik etiketi")
+            match_score: int = Field(description="0-100 arası CV uyum puanı")
+            match_reasoning: str = Field(description="Neden uyumlu veya eksik: tek kısa cümle")
+            source: str = Field(description="linkedin veya kariyer")
 
-    tasks = [_match(job) for job in EXTERNAL_JOBS]
-    jobs_with_scores = await asyncio.gather(*tasks)
+        class DiscoverResult(BaseModel):
+            jobs: list[JobListing] = Field(description="6 adet iş ilanı")
 
-    # Skora göre sırala
-    jobs_with_scores.sort(key=lambda x: x["match_score"], reverse=True)
+        llm = ChatGroq(
+            groq_api_key=settings.GROQ_API_KEY,
+            model="openai/gpt-oss-120b",
+        )
+        structured_llm = llm.with_structured_output(DiscoverResult)
 
-    return {"success": True, "data": jobs_with_scores, "is_mock": False}
+        prompt = f"""Aşağıdaki CV'yi dikkatlice oku. Bu kişinin meslek alanını, deneyim yılını ve yetkinliklerini analiz et.
+
+Sonra bu kişinin GERÇEKTEN İLGİLENEBİLECEĞİ, kendi alanına uygun 6 farklı iş ilanı oluştur.
+Örneğin CV sahibi avukatsa avukatlık/hukuk ilanları, pazarlamacıysa pazarlama ilanları, yazılımcıysa yazılım ilanları olmalı.
+
+Her ilan için:
+- title: İlan başlığı (Türkçe)
+- company: Türkiye'deki gerçek veya gerçekçi bir şirket adı
+- location: Şehir ve çalışma şekli
+- tags: 3 kısa anahtar kelime
+- match_score: 0-100 arası uyum puanı. CV'deki deneyim yılı, beceriler ve eğitime göre puanla. En az 2 ilan %60 üstü olsun.
+- match_reasoning: Tek kısa cümle. Eksik olan veya uyumlu olan 1 somut şeyi belirt. Örneğin: "İstenen 5 yıl deneyim, CV'de 2 yıl var." veya "Aranan Excel ve SAP yetkinlikleri CV'de mevcut."
+- source: "linkedin" veya "kariyer" (rastgele dağıt)
+
+CV:
+{cv_text[:3000]}"""
+
+        result = structured_llm.invoke(prompt)
+        jobs_list = []
+        for job in result.jobs:
+            job_dict = job.model_dump()
+            job_dict["url"] = _build_url(job.title, job.source)
+            job_dict["id"] = f"ai-{hash(job.title) % 100000}"
+            jobs_list.append(job_dict)
+
+        # Skora göre sırala
+        jobs_list.sort(key=lambda x: x["match_score"], reverse=True)
+
+        return {"success": True, "data": jobs_list, "is_mock": False}
+
+    except Exception as e:
+        logger.error(f"Discover AI hatası: {e}")
+        # Fallback: CV'deki anahtar kelimelerden basit URL oluştur
+        import re
+        words = re.findall(r'\b[A-ZÇĞİÖŞÜa-zçğıöşü]{4,}\b', cv_text[:500])
+        keyword = words[0] if words else "iş"
+        fallback_jobs = [
+            {
+                "id": "fallback-1",
+                "title": f"{keyword} alanında pozisyon",
+                "company": "Çeşitli Şirketler",
+                "location": "Türkiye",
+                "tags": [keyword],
+                "match_score": 0,
+                "match_reasoning": "AI bağlantı hatası. Linklere tıklayarak ilanları görebilirsin.",
+                "source": "linkedin",
+                "url": _build_url(keyword, "linkedin"),
+            }
+        ]
+        return {"success": True, "data": fallback_jobs, "is_mock": True}

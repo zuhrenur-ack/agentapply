@@ -37,6 +37,9 @@ export function AppProvider({ children }) {
     return response?.data || response
   }, [showToast])
 
+  const [cachedCV, setCachedCV] = useState(null)
+  const [cachedDiscover, setCachedDiscover] = useState(null)
+  
   // Backend'den başvuruları çek
   const fetchApplications = useCallback(async () => {
     setLoading(true)
@@ -44,7 +47,7 @@ export function AppProvider({ children }) {
       const res = await applicationAPI.getAll()
       const result = handleApiResponse(res)
       if (result.success && result.data) {
-        // En yeni başvurular en üstte görünsün diye tersine çeviriyoruz
+        // En yeni başvurular en üstte
         setApplications(Array.isArray(result.data) ? result.data.reverse() : [])
       }
     } catch (error) {
@@ -70,6 +73,10 @@ export function AppProvider({ children }) {
     hideToast,
     handleApiResponse,
     fetchApplications,
+    cachedCV,
+    setCachedCV,
+    cachedDiscover,
+    setCachedDiscover,
   }
 
   return (

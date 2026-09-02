@@ -18,13 +18,13 @@ function ScoreBadge({ score }) {
 
 export default function Discover() {
   const { getToken, user } = useAuth()
-  const { showToast } = useApp()
-  const [jobs, setJobs] = useState([])
-  const [loading, setLoading] = useState(true)
+  const { showToast, cachedDiscover, setCachedDiscover } = useApp()
+  const [jobs, setJobs] = useState(cachedDiscover || [])
+  const [loading, setLoading] = useState(!cachedDiscover)
 
   useEffect(() => {
     const fetchJobs = async () => {
-      if (!user) return
+      if (!user || cachedDiscover) return
       setLoading(true)
       try {
         const token = await getToken()
@@ -32,7 +32,10 @@ export default function Discover() {
           headers: { Authorization: `Bearer ${token}` },
           timeout: 90000,
         })
-        if (res.data?.success) setJobs(res.data.data)
+        if (res.data?.success) {
+          setJobs(res.data.data)
+          setCachedDiscover(res.data.data)
+        }
       } catch (error) {
         showToast('İlanlar yüklenemedi.', 'error')
       } finally {
@@ -40,7 +43,7 @@ export default function Discover() {
       }
     }
     fetchJobs()
-  }, [user, getToken, showToast])
+  }, [user, getToken, showToast, cachedDiscover, setCachedDiscover])
 
   return (
     <div className="space-y-4 animate-slide-up pb-6">
