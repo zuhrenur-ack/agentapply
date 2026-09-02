@@ -11,7 +11,7 @@ router = APIRouter(prefix="/applications", tags=["Başvurular"])
 service = ApplicationService()
 
 
-@router.get("/", response_model=APIResponse)
+@router.get("", response_model=APIResponse)
 async def get_applications():
     """Tüm başvuruları listeler."""
     result = await service.get_all()
@@ -27,7 +27,7 @@ async def get_application(application_id: str):
     return result
 
 
-@router.post("/", response_model=APIResponse)
+@router.post("", response_model=APIResponse)
 async def create_application(application: ApplicationCreate):
     """Yeni başvuru oluşturur."""
     result = await service.create(application)
