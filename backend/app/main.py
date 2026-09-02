@@ -10,6 +10,7 @@ from app.config import settings
 from app.routers import applications, ai
 from app.routers import profile
 from app.routers import cover_letter
+from app.routers import discover
 
 # Loglama yapılandırması
 logging.basicConfig(
