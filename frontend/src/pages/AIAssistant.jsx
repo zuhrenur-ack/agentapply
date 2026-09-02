@@ -164,24 +164,27 @@ export default function AIAssistant() {
 
       {result && (
         <div className="animate-fade-in">
-          <div className="flex p-1 bg-bg-secondary rounded-lg border border-rose-soft/30 mb-4 shadow-sm">
-            <button 
+          <div className="flex p-1 bg-bg-secondary rounded-xl border border-rose-soft/30 mb-4 shadow-sm gap-1">
+            <button
               onClick={() => setActiveTab('analysis')}
-              className={`flex-1 py-2 text-xs font-semibold rounded-md transition-all flex items-center justify-center gap-1.5 ${activeTab === 'analysis' ? 'bg-white text-text-primary shadow-sm' : 'text-text-muted'}`}
+              className={`flex-1 py-2 text-xs font-semibold rounded-lg transition-all flex items-center justify-center gap-1 min-w-0 ${activeTab === 'analysis' ? 'bg-white text-text-primary shadow-sm' : 'text-text-muted'}`}
             >
-              <FileText size={14} /> Analiz
+              <FileText size={13} className="shrink-0" />
+              <span className="truncate">Analiz</span>
             </button>
-            <button 
+            <button
               onClick={() => setActiveTab('match')}
-              className={`flex-1 py-2 text-xs font-semibold rounded-md transition-all flex items-center justify-center gap-1.5 ${activeTab === 'match' ? 'bg-white text-text-primary shadow-sm' : 'text-text-muted'}`}
+              className={`flex-1 py-2 text-xs font-semibold rounded-lg transition-all flex items-center justify-center gap-1 min-w-0 ${activeTab === 'match' ? 'bg-white text-text-primary shadow-sm' : 'text-text-muted'}`}
             >
-              <Briefcase size={14} /> Eşleştirme
+              <Briefcase size={13} className="shrink-0" />
+              <span className="truncate">Eşleşme</span>
             </button>
-            <button 
+            <button
               onClick={() => setActiveTab('coach')}
-              className={`flex-1 py-2 text-xs font-semibold rounded-md transition-all flex items-center justify-center gap-1.5 ${activeTab === 'coach' ? 'bg-white text-text-primary shadow-sm' : 'text-text-muted'}`}
+              className={`flex-1 py-2 text-xs font-semibold rounded-lg transition-all flex items-center justify-center gap-1 min-w-0 ${activeTab === 'coach' ? 'bg-white text-text-primary shadow-sm' : 'text-text-muted'}`}
             >
-              <MessageSquare size={14} /> Koç
+              <MessageSquare size={13} className="shrink-0" />
+              <span className="truncate">Koç</span>
             </button>
           </div>
 

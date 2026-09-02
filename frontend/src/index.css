@@ -128,11 +128,23 @@ body {
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-soft);
   transition: all 0.3s ease;
+  overflow: hidden;
 }
 
 .glass-card:hover {
   box-shadow: var(--shadow-medium);
   transform: translateY(-2px);
+}
+
+/* Standart kart (hover efekti olmayan) */
+.card-base {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-soft);
+  overflow: hidden;
 }
 
 /* Gradient Arka Plan */
