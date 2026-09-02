@@ -81,15 +81,14 @@ async def discover_jobs(authorization: str = Header(None)):
         )
 
         prompt = f"""Aşağıdaki CV'yi oku ve kişinin mesleğini (örneğin: Avukat, Yazılımcı, Muhasebeci) tespit et.
-Daha sonra bu mesleğe %100 uygun 3 farklı iş ilanı oluştur.
-Eğer CV sahibi Hukuk/Avukat ise, oluşturduğun ilanlar "Kıdemli Avukat", "Hukuk Müşaviri" gibi olsun.
+Daha sonra bu mesleğe %100 uygun 6 farklı iş ilanı oluştur.
 
 MUTLAKA aşağıdaki JSON formatında, geçerli bir JSON objesi döndür:
 {{
   "jobs": [
     {{
-      "title": "İlan başlığı",
-      "company": "Şirket adı (Örn: XYZ Hukuk Bürosu, ABC Teknoloji)",
+      "title": "İlan başlığı (Örn: Kıdemli Avukat, Frontend Developer)",
+      "company": "Türkiye'den GERÇEK şirket adları (Örn: Koç Holding, Eczacıbaşı, Trendyol, Türk Hava Yolları, Garanti BBVA, veya bilinen gerçek hukuk büroları). ASLA XYZ, ABC gibi sahte isimler kullanma!",
       "location": "Şehir",
       "tags": ["İdare Hukuku", "Dava Takibi", "Danışmanlık"],
       "match_score": 85,
@@ -100,6 +99,7 @@ MUTLAKA aşağıdaki JSON formatında, geçerli bir JSON objesi döndür:
 }}
 
 SADECE JSON döndür. Başka hiçbir açıklama yazma.
+Tam 6 adet ilan üret.
 match_score 70-95 arası mantıklı bir sayı olmalı.
 match_reasoning EN FAZLA 10 kelimelik kısacık bir cümle olmalı.
 

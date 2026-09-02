@@ -65,14 +65,20 @@ export default function Discover() {
         <div className="space-y-3">
           {jobs.map((job) => (
             <div key={job.id} className="glass-card p-4 space-y-3">
-              {/* Üst satır: Başlık + Skor */}
-              <div className="flex items-start justify-between gap-2">
-                <div className="min-w-0">
-                  <h3 className="text-sm font-bold text-text-primary leading-tight">{job.title}</h3>
-                  <p className="text-xs text-text-secondary flex items-center gap-1 mt-0.5">
-                    <Briefcase size={11} className="shrink-0" />
-                    <span className="truncate">{job.company}</span>
-                  </p>
+              {/* Üst satır: Logo + Başlık + Skor */}
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex items-start gap-3 min-w-0">
+                  <img 
+                    src={`https://ui-avatars.com/api/?name=${encodeURIComponent(job.company)}&background=random&color=fff&size=40&rounded=true&bold=true`}
+                    alt={job.company}
+                    className="w-10 h-10 rounded-lg shadow-sm shrink-0"
+                  />
+                  <div className="min-w-0">
+                    <h3 className="text-sm font-bold text-text-primary leading-tight">{job.title}</h3>
+                    <p className="text-xs text-text-secondary flex items-center gap-1 mt-0.5">
+                      <span className="truncate">{job.company}</span>
+                    </p>
+                  </div>
                 </div>
                 <ScoreBadge score={job.match_score} />
               </div>
@@ -107,6 +113,16 @@ export default function Discover() {
               </a>
             </div>
           ))}
+          {/* Daha Fazla Yükle Butonu */}
+          <button
+            onClick={() => {
+              setJobs([])
+              setCachedDiscover(null)
+            }}
+            className="w-full py-3 mt-4 rounded-xl font-semibold text-sm text-blue-deep bg-blue-soft/20 hover:bg-blue-soft/40 transition-colors border border-blue-soft/30"
+          >
+            Daha Fazla İlan Bul
+          </button>
         </div>
       )}
     </div>
