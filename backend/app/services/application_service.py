@@ -30,7 +30,9 @@ class ApplicationService:
             }
         except Exception as e:
             logger.error(f"Başvuruları getirme hatası: {e}")
-            return get_fallback_response("applications")
+            fallback = get_fallback_response("applications")
+            fallback["message"] = f"Hata: {str(e)}"
+            return fallback
     
     async def get_by_id(self, application_id: str) -> dict:
         """Belirtilen ID'ye sahip başvuruyu getirir."""
@@ -72,7 +74,7 @@ class ApplicationService:
             return {
                 "success": True,
                 "data": application.model_dump(),
-                "message": "Veritabanına ulaşılamadı. Başvuru kaydedilemedi.",
+                "message": f"Hata: {str(e)}",
                 "is_mock": True
             }
     

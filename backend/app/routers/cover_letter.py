@@ -37,7 +37,7 @@ async def generate_cover_letter(body: CoverLetterRequest):
     """CV ve pozisyon bilgisine göre niyet mektubu üretir."""
     try:
         from langchain_groq import ChatGroq
-        from langchain.schema import HumanMessage, SystemMessage
+        from langchain_core.messages import HumanMessage, SystemMessage
         from app.config import settings
 
         if not settings.GROQ_API_KEY:
