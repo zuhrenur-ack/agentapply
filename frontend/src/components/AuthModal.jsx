@@ -46,7 +46,7 @@ export default function AuthModal({ onClose }) {
               {mode === 'signin' ? '👋 Hoş Geldin' : '✨ Hesap Oluştur'}
             </h2>
             <p className="text-xs text-text-muted mt-0.5">
-              {mode === 'signin' ? 'AgentApply'e giriş yap' : 'Kariyer yolculuğuna başla'}
+              {mode === 'signin' ? "AgentApply'e giriş yap" : 'Kariyer yolculuğuna başla'}
             </p>
           </div>
           <button onClick={onClose} className="p-2 rounded-full hover:bg-rose-soft/30 transition-colors">
