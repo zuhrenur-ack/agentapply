@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { createPortal } from 'react-dom'
 import { X, Mail, Lock, Eye, EyeOff, LogIn, UserPlus } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 
@@ -36,7 +37,7 @@ export default function AuthModal({ onClose }) {
     setLoading(false)
   }
 
-  return (
+  return createPortal(
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(4px)' }}>
       <div className="w-full max-w-sm bg-bg-secondary rounded-2xl shadow-2xl border border-rose-soft/30 overflow-hidden">
         {/* Başlık */}
@@ -123,6 +124,7 @@ export default function AuthModal({ onClose }) {
           </p>
         </form>
       </div>
-    </div>
+    </div>,
+    document.body
   )
 }
