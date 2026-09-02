@@ -1,9 +1,11 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { createPortal } from 'react-dom'
-import { X, Copy, Download, Sparkles, CheckCheck, AlertCircle } from 'lucide-react'
+import { X, Copy, Download, Sparkles, CheckCheck, AlertCircle, FileText, Upload } from 'lucide-react'
 import api from '../services/api'
+import { useAuth } from '../context/AuthContext'
 
 export default function CoverLetterModal({ application, onClose }) {
+  const { getToken, user } = useAuth()
   const [cvText, setCvText] = useState('')
   const [jobDesc, setJobDesc] = useState('')
   const [letter, setLetter] = useState('')
@@ -11,6 +13,28 @@ export default function CoverLetterModal({ application, onClose }) {
   const [isMock, setIsMock] = useState(false)
   const [copied, setCopied] = useState(false)
   const [step, setStep] = useState('form') // 'form' | 'result'
+  const [fetchingCV, setFetchingCV] = useState(false)
+
+  // Modala girildiğinde otomatik olarak kayıtlı CV'yi çek
+  useEffect(() => {
+    const fetchSavedCV = async () => {
+      if (!user) return
+      setFetchingCV(true)
+      try {
+        const token = await getToken()
+        const res = await api.get('/profile/cv', {
+          headers: { Authorization: `Bearer ${token}` }
+        })
+        if (res.data?.data?.content) {
+          setCvText(res.data.data.content)
+        }
+      } catch (e) {
+        console.warn('Kayıtlı CV bulunamadı veya çekilemedi:', e)
+      }
+      setFetchingCV(false)
+    }
+    fetchSavedCV()
+  }, [user, getToken])
 
   const handleGenerate = async () => {
     if (!cvText.trim()) return
@@ -85,14 +109,26 @@ export default function CoverLetterModal({ application, onClose }) {
               )}
 
               <div>
-                <label className="text-xs font-semibold text-text-secondary block mb-1.5">
-                  CV Metnin <span className="text-red-400">*</span>
-                </label>
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="text-xs font-semibold text-text-secondary flex items-center gap-1.5">
+                    CV Metnin <span className="text-red-400">*</span>
+                    {fetchingCV && <span className="text-blue-medium animate-pulse text-[10px]">(Profilinden yükleniyor...)</span>}
+                  </label>
+                  {cvText && (
+                    <button 
+                      onClick={() => setCvText('')}
+                      className="text-[10px] text-text-muted hover:text-rose-medium transition-colors"
+                    >
+                      Temizle / Yeni Yaz
+                    </button>
+                  )}
+                </div>
                 <textarea
                   value={cvText}
                   onChange={(e) => setCvText(e.target.value)}
                   placeholder="CV'indeki beceriler, deneyimler ve eğitim bilgilerini buraya yapıştır..."
                   rows={5}
+                  disabled={fetchingCV}
                   className="w-full px-3 py-2.5 rounded-xl border border-rose-soft/40 bg-bg-primary text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:border-rose-medium/60 resize-none transition-colors"
                 />
               </div>
