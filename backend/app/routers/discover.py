@@ -70,51 +70,51 @@ async def discover_jobs(authorization: str = Header(None)):
     try:
         from langchain_groq import ChatGroq
         from langchain_core.messages import HumanMessage, SystemMessage
+        from langchain_core.output_parsers import JsonOutputParser
         from pydantic import BaseModel, Field
         import json
-
-        class JobListing(BaseModel):
-            title: str = Field(description="İş ilanı başlığı")
-            company: str = Field(description="Türkiye'deki gerçek veya gerçekçi bir şirket adı")
-            location: str = Field(description="Şehir ve çalışma modeli (Uzaktan/Hibrit/Ofis)")
-            tags: list[str] = Field(description="3 anahtar yetkinlik etiketi")
-            match_score: int = Field(description="0-100 arası CV uyum puanı")
-            match_reasoning: str = Field(description="Neden uyumlu veya eksik: tek kısa cümle")
-            source: str = Field(description="linkedin veya kariyer")
-
-        class DiscoverResult(BaseModel):
-            jobs: list[JobListing] = Field(description="En uygun 3 adet iş ilanı")
 
         llm = ChatGroq(
             groq_api_key=settings.GROQ_API_KEY,
             model="openai/gpt-oss-120b",
             temperature=0.3
         )
-        structured_llm = llm.with_structured_output(DiscoverResult)
 
         prompt = f"""Aşağıdaki CV'yi oku ve kişinin mesleğini (örneğin: Avukat, Yazılımcı, Muhasebeci) tespit et.
 Daha sonra bu mesleğe %100 uygun 3 farklı iş ilanı oluştur.
 Eğer CV sahibi Hukuk/Avukat ise, oluşturduğun ilanlar "Kıdemli Avukat", "Hukuk Müşaviri" gibi olsun.
 
-Her ilan için:
-- title: İlan başlığı
-- company: Şirket adı (Örn: XYZ Hukuk Bürosu, ABC Teknoloji)
-- location: Şehir
-- tags: 3 anahtar kelime (Örn: ["İdare Hukuku", "Dava Takibi", "Danışmanlık"])
-- match_score: CV'ye göre 70-95 arası mantıklı bir skor.
-- match_reasoning: Neden uyumlu olduğuna dair EN FAZLA 10 kelimelik kısacık bir cümle. (Örn: 'İstenen 3 yıl tecrübe CV'nizle eşleşiyor.')
-- source: 'linkedin' veya 'kariyer'
+MUTLAKA aşağıdaki JSON formatında, geçerli bir JSON objesi döndür:
+{{
+  "jobs": [
+    {{
+      "title": "İlan başlığı",
+      "company": "Şirket adı (Örn: XYZ Hukuk Bürosu, ABC Teknoloji)",
+      "location": "Şehir",
+      "tags": ["İdare Hukuku", "Dava Takibi", "Danışmanlık"],
+      "match_score": 85,
+      "match_reasoning": "İstenen 3 yıl tecrübe CV'nizle eşleşiyor.",
+      "source": "linkedin"
+    }}
+  ]
+}}
+
+SADECE JSON döndür. Başka hiçbir açıklama yazma.
+match_score 70-95 arası mantıklı bir sayı olmalı.
+match_reasoning EN FAZLA 10 kelimelik kısacık bir cümle olmalı.
 
 CV:
 {cv_text[:2500]}"""
 
-        result = structured_llm.invoke(prompt)
+        result_text = llm.invoke(prompt)
+        parser = JsonOutputParser()
+        result_json = parser.invoke(result_text)
+
         jobs_list = []
-        for job in result.jobs:
-            job_dict = job.model_dump()
-            job_dict["url"] = _build_url(job.title, job.source)
-            job_dict["id"] = f"ai-{hash(job.title) % 100000}"
-            jobs_list.append(job_dict)
+        for job in result_json.get("jobs", []):
+            job["url"] = _build_url(job.get("title", ""), job.get("source", "linkedin"))
+            job["id"] = f"ai-{hash(job.get('title', '')) % 100000}"
+            jobs_list.append(job)
 
         # Skora göre sırala
         jobs_list.sort(key=lambda x: x["match_score"], reverse=True)
