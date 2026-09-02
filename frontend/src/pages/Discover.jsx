@@ -1,8 +1,20 @@
 import { useState, useEffect } from 'react'
-import { Globe, Briefcase, ChevronRight, CheckCircle2, AlertCircle, Loader2 } from 'lucide-react'
+import { Globe, Briefcase, ExternalLink, Loader2, MapPin, Tag } from 'lucide-react'
 import api from '../services/api'
 import { useAuth } from '../context/AuthContext'
 import { useApp } from '../context/AppContext'
+
+function ScoreBadge({ score }) {
+  const color =
+    score >= 70 ? 'text-accent-success bg-green-50 border-green-200' :
+    score >= 40 ? 'text-amber-600 bg-amber-50 border-amber-200' :
+    'text-rose-medium bg-rose-soft/20 border-rose-soft/50'
+  return (
+    <span className={`text-sm font-bold px-2.5 py-1 rounded-full border ${color}`}>
+      %{score}
+    </span>
+  )
+}
 
 export default function Discover() {
   const { getToken, user } = useAuth()
@@ -11,78 +23,85 @@ export default function Discover() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    const fetchDiscoverJobs = async () => {
+    const fetchJobs = async () => {
       if (!user) return
       setLoading(true)
       try {
         const token = await getToken()
         const res = await api.get('/discover/jobs', {
-          headers: { Authorization: `Bearer ${token}` }
+          headers: { Authorization: `Bearer ${token}` },
+          timeout: 90000,
         })
-        if (res.data?.success) {
-          setJobs(res.data.data)
-        }
+        if (res.data?.success) setJobs(res.data.data)
       } catch (error) {
-        console.error('Discover error:', error)
-        showToast('İlanlar çekilirken bir hata oluştu.', 'error')
+        showToast('İlanlar yüklenemedi.', 'error')
       } finally {
         setLoading(false)
       }
     }
-    fetchDiscoverJobs()
+    fetchJobs()
   }, [user, getToken, showToast])
 
   return (
-    <div className="space-y-6 animate-slide-up pb-6">
+    <div className="space-y-4 animate-slide-up pb-6">
       <div className="pt-2">
         <h2 className="text-xl font-bold text-text-primary mb-1 flex items-center gap-2">
-          <Globe className="text-blue-medium" size={24} /> Keşfet
+          <Globe className="text-blue-medium" size={22} /> Keşfet
         </h2>
-        <p className="text-sm text-text-secondary leading-relaxed">
-          Senin CV'ne en uygun dış ilanlar yapay zeka tarafından taranır ve uyum skoruyla gösterilir.
+        <p className="text-sm text-text-secondary">
+          CV'ne uygun ilanlar AI tarafından analiz edilip uyum skoru ile gösterilir.
         </p>
       </div>
 
       {loading ? (
         <div className="flex flex-col items-center justify-center py-20 gap-3">
           <Loader2 size={32} className="text-blue-medium animate-spin" />
-          <p className="text-sm text-text-muted">CV'in ilanlarla eşleştiriliyor...</p>
+          <p className="text-sm text-text-muted">İlanlar CV'inle eşleştiriliyor...</p>
         </div>
       ) : (
-        <div className="space-y-4">
+        <div className="space-y-3">
           {jobs.map((job) => (
-            <div key={job.id} className="glass-card p-5 space-y-4 relative overflow-hidden group">
-              {/* Score Badge */}
-              <div className="absolute top-4 right-4 flex items-center justify-center w-12 h-12 rounded-full shadow-sm bg-bg-secondary border border-rose-soft/30">
-                <span className={`text-lg font-bold ${job.match_score >= 80 ? 'text-accent-success' : job.match_score >= 50 ? 'text-amber-500' : 'text-rose-medium'}`}>
-                  %{job.match_score}
+            <div key={job.id} className="glass-card p-4 space-y-3">
+              {/* Üst satır: Başlık + Skor */}
+              <div className="flex items-start justify-between gap-2">
+                <div className="min-w-0">
+                  <h3 className="text-sm font-bold text-text-primary leading-tight">{job.title}</h3>
+                  <p className="text-xs text-text-secondary flex items-center gap-1 mt-0.5">
+                    <Briefcase size={11} className="shrink-0" />
+                    <span className="truncate">{job.company}</span>
+                  </p>
+                </div>
+                <ScoreBadge score={job.match_score} />
+              </div>
+
+              {/* Konum + Etiketler */}
+              <div className="flex flex-wrap gap-1.5 items-center">
+                <span className="flex items-center gap-1 text-[11px] text-text-muted">
+                  <MapPin size={11} /> {job.location}
                 </span>
+                {job.tags?.map((tag) => (
+                  <span key={tag} className="text-[10px] px-2 py-0.5 rounded-full bg-blue-soft/20 text-blue-deep border border-blue-soft/30 font-medium">
+                    {tag}
+                  </span>
+                ))}
               </div>
 
-              <div>
-                <h3 className="text-base font-bold text-text-primary pr-14">{job.title}</h3>
-                <p className="text-sm text-text-secondary flex items-center gap-2 mt-1">
-                  <Briefcase size={14} className="text-rose-medium" /> {job.company}
+              {/* Öne Çıkan Neden */}
+              {job.match_reasoning && (
+                <p className="text-xs text-text-secondary bg-bg-primary rounded-lg px-3 py-2 border border-rose-soft/20 leading-relaxed line-clamp-2">
+                  <span className="font-semibold text-text-primary">AI: </span>{job.match_reasoning}
                 </p>
-              </div>
+              )}
 
-              <div className="p-3 bg-bg-primary rounded-xl border border-rose-soft/30">
-                <h4 className="text-xs font-semibold text-text-secondary mb-1 flex items-center gap-1.5">
-                  <CheckCircle2 size={14} className="text-blue-medium" /> Öne Çıkan Neden
-                </h4>
-                <p className="text-sm text-text-primary">
-                  {job.match_reasoning}
-                </p>
-              </div>
-
-              <div className="flex gap-2">
-                <button 
-                  onClick={() => window.open(job.url, '_blank')}
-                  className="flex-1 py-2 text-sm font-semibold text-blue-medium hover:bg-blue-soft/20 bg-blue-soft/10 rounded-xl transition-colors border border-blue-soft/30"
-                >
-                  İlana Git
-                </button>
-              </div>
+              {/* İlan Linki */}
+              <a
+                href={job.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center justify-center gap-2 w-full py-2 text-xs font-semibold text-blue-deep bg-blue-soft/15 hover:bg-blue-soft/30 rounded-xl transition-colors border border-blue-soft/30"
+              >
+                <ExternalLink size={13} /> İlana Git (Kariyer.net / LinkedIn)
+              </a>
             </div>
           ))}
         </div>
