@@ -4,6 +4,8 @@ import Layout from './components/Layout'
 import Dashboard from './pages/Dashboard'
 import Applications from './pages/Applications'
 import AIAssistant from './pages/AIAssistant'
+import Profile from './pages/Profile'
+import { AuthProvider } from './context/AuthContext'
 
 /**
  * Ana Uygulama Bileşeni.
@@ -11,17 +13,20 @@ import AIAssistant from './pages/AIAssistant'
  */
 function App() {
   return (
-    <AppProvider>
-      <Router>
-        <Layout>
-          <Routes>
-            <Route path="/" element={<Dashboard />} />
-            <Route path="/applications" element={<Applications />} />
-            <Route path="/ai" element={<AIAssistant />} />
-          </Routes>
-        </Layout>
-      </Router>
-    </AppProvider>
+    <AuthProvider>
+      <AppProvider>
+        <Router>
+          <Layout>
+            <Routes>
+              <Route path="/" element={<Dashboard />} />
+              <Route path="/applications" element={<Applications />} />
+              <Route path="/ai" element={<AIAssistant />} />
+              <Route path="/profile" element={<Profile />} />
+            </Routes>
+          </Layout>
+        </Router>
+      </AppProvider>
+    </AuthProvider>
   )
 }
 

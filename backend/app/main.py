@@ -8,6 +8,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.config import settings
 from app.routers import applications, ai
+from app.routers import profile
 
 # Loglama yapılandırması
 logging.basicConfig(
@@ -37,6 +38,7 @@ app.add_middleware(
 # Router'ları bağla
 app.include_router(applications.router, prefix="/api")
 app.include_router(ai.router, prefix="/api")
+app.include_router(profile.router, prefix="/api")
 
 
 @app.get("/health", tags=["Sistem"])

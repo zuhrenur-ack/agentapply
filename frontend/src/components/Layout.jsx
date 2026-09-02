@@ -1,5 +1,6 @@
 import BottomNav from './BottomNav'
 import Toast from './Toast'
+import UserMenu from './UserMenu'
 
 /**
  * Sayfa Düzeni Bileşeni.
@@ -26,11 +27,8 @@ export default function Layout({ children }) {
             </div>
           </div>
           
-          {/* Durum göstergesi */}
-          <div className="flex items-center gap-1.5">
-            <div className="w-2 h-2 rounded-full bg-accent-success animate-pulse-soft" />
-            <span className="text-[11px] text-text-muted">Çevrimiçi</span>
-          </div>
+          {/* Kullanıcı Menüsü */}
+          <UserMenu />
         </div>
       </header>
 

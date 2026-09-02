@@ -1,5 +1,5 @@
 import { useLocation, useNavigate } from 'react-router-dom'
-import { LayoutDashboard, FolderKanban, Sparkles } from 'lucide-react'
+import { LayoutDashboard, FolderKanban, Sparkles, User } from 'lucide-react'
 
 /**
  * Alt Navigasyon Barı.
@@ -25,6 +25,11 @@ const navItems = [
     path: '/ai',
     label: 'AI Asistan',
     icon: Sparkles,
+  },
+  {
+    path: '/profile',
+    label: 'Profil',
+    icon: User,
   },
 ]
 

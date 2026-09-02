@@ -1,7 +1,7 @@
 """Supabase veritabanı istemcisi.
 
-Supabase paketi yüklü değilse veya bağlantı bilgileri eksikse
-güvenli bir şekilde None döner — fallback mekanizması devreye girer.
+Service role key ile güvenli bağlantı. Paket yoksa veya key
+eksikse None döner, fallback mekanizması devreye girer.
 """
 from app.config import settings
 import logging
@@ -13,29 +13,24 @@ try:
     SUPABASE_AVAILABLE = True
 except ImportError:
     SUPABASE_AVAILABLE = False
-    logger.warning("Supabase paketi yüklü değil. Veritabanı devre dışı, mock veri kullanılacak.")
+    logger.warning("Supabase paketi yüklü değil. Mock veri kullanılacak.")
 
 
 def get_supabase_client():
-    """Supabase istemcisini oluşturur ve döndürür.
-    
-    Bağlantı başarısız olursa None döner ve loglara yazar.
-    """
+    """Supabase service-role istemcisini oluşturur (backend işlemleri için)."""
     if not SUPABASE_AVAILABLE:
         return None
     try:
-        if not settings.SUPABASE_URL or not settings.SUPABASE_KEY:
-            logger.warning("Supabase URL veya Key ayarlanmamış. Veritabanı devre dışı.")
+        if not settings.SUPABASE_URL or not settings.SUPABASE_SERVICE_ROLE_KEY:
+            logger.warning("Supabase kimlik bilgileri eksik. Veritabanı devre dışı.")
             return None
-        if settings.SUPABASE_URL == "your_supabase_url_here":
-            logger.warning("Supabase henüz yapılandırılmamış. Mock veri kullanılacak.")
-            return None
-        client = create_client(settings.SUPABASE_URL, settings.SUPABASE_KEY)
+        client = create_client(settings.SUPABASE_URL, settings.SUPABASE_SERVICE_ROLE_KEY)
         logger.info("Supabase bağlantısı başarılı.")
         return client
     except Exception as e:
         logger.error(f"Supabase bağlantı hatası: {e}")
         return None
 
-# Uygulama genelinde kullanılacak Supabase istemcisi
+
+# Uygulama genelinde kullanılacak istemci
 supabase = get_supabase_client()
