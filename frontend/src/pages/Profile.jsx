@@ -46,10 +46,14 @@ export default function Profile() {
     try {
       const res = await api.post('/ai/analyze-cv', formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
-        timeout: 30000
+        timeout: 90000
       })
-      if (res.data?.data?.summary) {
-        setCvText(JSON.stringify(res.data.data, null, 2))
+      if (res.data?.data) {
+        // Backend'den raw_text gelirse onu kullan, gelmezse temiz bir formatta göster
+        const extractedText = res.data.data.raw_text || 
+          Object.entries(res.data.data).map(([k,v]) => `${k.toUpperCase()}:\n${Array.isArray(v) ? v.join('\n') : v}`).join('\n\n');
+        
+        setCvText(extractedText)
         setMessage('PDF analiz edildi. Kaydet butonuna basarak CV\'ni sakla.')
         setStatus('success')
       }

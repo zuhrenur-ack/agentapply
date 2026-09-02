@@ -40,13 +40,13 @@ export default function ApplicationFormModal({ isOpen, onClose }) {
       // Toast çakışmasını önlemek için genel uyarıyı gizliyoruz (true)
       const result = handleApiResponse(res, true)
       
-      if (result.success) {
-        showToast(result.is_mock ? 'Başvuru eklendi (Çevrimdışı Mod)' : 'Başvuru eklendi!', 'success')
+      if (result.success || result.is_timeout) {
+        showToast(result.is_mock ? 'Bağlantı kurulamadı, geçici olarak kaydedildi (Çevrimdışı)' : 'Başvuru eklendi!', result.is_mock ? 'warning' : 'success')
         
         // Eğer çevrimdışı (mock) moddaysak API'den yeniden çekmek yerine 
         // eklenen veriyi direkt state'e ekleyelim ki listeden kaybolmasın.
         if (result.is_mock) {
-          const newApp = { ...result.data, id: Date.now().toString() } // Geçici ID
+          const newApp = { ...formData, id: Date.now().toString() } // Form datası
           setApplications(prev => [newApp, ...prev])
         } else {
           fetchApplications() // Gerçek DB ise listeyi yeniden çek

@@ -25,6 +25,10 @@ class AIService:
             # Gemini ile analiz et
             analysis_result = await self.cv_analyst.analyze(cv_text)
             
+            # Analiz sonucuna ham metni de ekle (frontend'in görebilmesi için)
+            if isinstance(analysis_result, dict):
+                analysis_result["raw_text"] = cv_text
+
             return {
                 "success": True,
                 "data": analysis_result,
