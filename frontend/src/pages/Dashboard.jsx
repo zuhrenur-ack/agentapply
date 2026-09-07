@@ -1,17 +1,41 @@
-import { Briefcase, TrendingUp, Clock, CheckCircle } from 'lucide-react'
+import { useState, useEffect } from 'react'
+import { Briefcase, TrendingUp, Clock, CheckCircle, AlertCircle, Zap } from 'lucide-react'
+import { Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Legend, Tooltip } from 'recharts'
 import { useApp } from '../context/AppContext'
+import { useAuth } from '../context/AuthContext'
+import api from '../services/api'
 import AppCard from '../components/AppCard'
 
 /**
- * Dashboard Sayfası — Kanban Panosu Özeti.
- * 
- * Başvuru durumlarının API verileriyle özet istatistikleri ve
- * son başvuruların kartlarını gösterir.
+ * Dashboard Sayfası — Kanban Panosu Özeti & Skill Gap.
  */
 export default function Dashboard() {
-  const { applications, loading } = useApp()
+  const { applications, loading: appLoading } = useApp()
+  const { user, getToken } = useAuth()
+  
+  const [skillGapData, setSkillGapData] = useState(null)
+  const [skillGapLoading, setSkillGapLoading] = useState(false)
 
-  // Dinamik istatistik hesaplamaları
+  useEffect(() => {
+    const fetchSkillGap = async () => {
+      if (!user) return
+      setSkillGapLoading(true)
+      try {
+        const token = await getToken()
+        const res = await api.get('/ai/skill-gap', {
+          headers: { Authorization: `Bearer ${token}` }
+        })
+        if (res.data?.success) {
+          setSkillGapData(res.data.data)
+        }
+      } catch (e) {
+        console.error(e)
+      } finally {
+        setSkillGapLoading(false)
+      }
+    }
+    fetchSkillGap()
+  }, [user, getToken])
   const totalApps = applications.length || 0
   const appliedApps = applications.filter(a => a.status === 'applied').length || 0
   const waitingApps = applications.filter(a => a.status === 'planned').length || 0
@@ -52,7 +76,7 @@ export default function Dashboard() {
                 <Icon size={20} className="text-text-secondary" />
               </div>
               <div className="space-y-1 w-full">
-                {loading ? (
+                {appLoading ? (
                    <div className="w-7 h-7 border-2 border-text-muted/30 border-t-text-secondary rounded-full animate-spin" />
                 ) : (
                   <>
@@ -76,7 +100,7 @@ export default function Dashboard() {
         </div>
         
         <div className="space-y-4">
-          {loading ? (
+          {appLoading ? (
              <div className="flex justify-center p-6">
                <div className="w-8 h-8 border-4 border-rose-soft border-t-rose-deep rounded-full animate-spin" />
              </div>
@@ -93,20 +117,50 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* AI Asistan Çağrı Kartı */}
-      <div className="glass-card p-6 mt-4 bg-gradient-to-br from-rose-soft/50 to-blue-soft/50 text-center flex flex-col items-center">
-        <div className="w-14 h-14 rounded-full bg-gradient-to-br from-rose-medium to-blue-medium flex items-center justify-center mb-4 shadow-[var(--shadow-soft)]">
-          <span className="text-2xl">✨</span>
-        </div>
-        <h3 className="text-base font-semibold text-text-primary mb-2">
-          AI Asistanını Dene
+      {/* Görsel Yetenek Açığı (Skill Gap) Analizi */}
+      <div className="pt-2">
+        <h3 className="text-base font-semibold text-text-primary mb-4">
+          Senin Yeteneklerin vs. İlan Gereksinimleri
         </h3>
-        <p className="text-sm text-text-secondary mb-5 leading-relaxed max-w-[250px]">
-          CV'ni yükle, en uygun ilanları bul ve mülakata hazırlan.
-        </p>
-        <button className="btn-primary w-full max-w-[200px] py-3 text-sm">
-          Başla →
-        </button>
+        
+        {skillGapLoading ? (
+          <div className="glass-card p-8 flex flex-col items-center justify-center gap-3">
+            <div className="w-8 h-8 border-4 border-rose-soft border-t-rose-deep rounded-full animate-spin" />
+            <p className="text-xs text-text-muted text-center">Yeteneklerin piyasa verileriyle kıyaslanıyor...</p>
+          </div>
+        ) : skillGapData ? (
+          <div className="space-y-4">
+            <div className="glass-card p-4 flex justify-center items-center h-64 overflow-hidden relative">
+              <RadarChart cx="50%" cy="50%" outerRadius="70%" width={300} height={250} data={skillGapData.radar_data}>
+                <PolarGrid stroke="#e2e8f0" />
+                <PolarAngleAxis dataKey="subject" tick={{ fill: '#64748b', fontSize: 10 }} />
+                <PolarRadiusAxis angle={30} domain={[0, 100]} tick={false} axisLine={false} />
+                <Radar name="Senin Seviyen" dataKey="A" stroke="#f43f5e" fill="#f43f5e" fillOpacity={0.4} />
+                <Radar name="Piyasa Beklentisi" dataKey="B" stroke="#3b82f6" fill="#3b82f6" fillOpacity={0.4} />
+                <Legend iconType="circle" wrapperStyle={{ fontSize: '11px', bottom: 0 }} />
+                <Tooltip contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} />
+              </RadarChart>
+              {skillGapData.is_mock && (
+                <div className="absolute top-2 right-2 flex items-center gap-1 bg-amber-50 text-amber-600 text-[10px] px-2 py-1 rounded-md border border-amber-200">
+                  <AlertCircle size={10} /> {skillGapData.recommendations[0]}
+                </div>
+              )}
+            </div>
+
+            {/* AI Tavsiye Rozetleri */}
+            <div className="space-y-2">
+              {!skillGapData.is_mock && skillGapData.recommendations.map((rec, idx) => (
+                <div key={idx} className="glass-card p-3 flex items-start gap-3 border-l-4 border-l-blue-medium">
+                  <Zap size={16} className="text-blue-medium shrink-0 mt-0.5" />
+                  <p className="text-xs text-text-secondary leading-relaxed">
+                    <span className="font-semibold text-text-primary">Groq AI Tavsiyesi: </span>
+                    {rec}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
+        ) : null}
       </div>
     </div>
   )
