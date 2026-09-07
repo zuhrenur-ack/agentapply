@@ -2,7 +2,7 @@
 
 CV Analizi, İlan Eşleştirme ve Mülakat Koçu ajanları.
 """
-from fastapi import APIRouter, UploadFile, File, Form
+from fastapi import APIRouter, UploadFile, File, Form, Header
 from app.models.schemas import APIResponse
 from app.utils.fallback import get_fallback_response
 
