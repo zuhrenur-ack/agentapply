@@ -22,19 +22,34 @@ export default function Discover() {
   const [jobs, setJobs] = useState(cachedDiscover || [])
   const [loading, setLoading] = useState(!cachedDiscover)
 
+  const [page, setPage] = useState(1)
+
   useEffect(() => {
     const fetchJobs = async () => {
-      if (!user || cachedDiscover) return
+      if (!user) return
+      
+      // İlk yükleme veya önbellek kontrolü
+      if (cachedDiscover && page === 1) {
+        setJobs(cachedDiscover)
+        setLoading(false)
+        return
+      }
+      
       setLoading(true)
       try {
         const token = await getToken()
-        const res = await api.get('/discover/jobs', {
+        const res = await api.get(`/discover/jobs?page=${page}`, {
           headers: { Authorization: `Bearer ${token}` },
           timeout: 90000,
         })
         if (res.data?.success) {
-          setJobs(res.data.data)
-          setCachedDiscover(res.data.data)
+          const newJobs = res.data.data
+          if (page === 1) {
+            setJobs(newJobs)
+            setCachedDiscover(newJobs)
+          } else {
+            setJobs(prev => [...prev, ...newJobs])
+          }
         }
       } catch (error) {
         showToast('İlanlar yüklenemedi.', 'error')
@@ -43,11 +58,11 @@ export default function Discover() {
       }
     }
     fetchJobs()
-  }, [user, getToken, showToast, cachedDiscover, setCachedDiscover])
+  }, [user, getToken, showToast, page])
 
   return (
-    <div className="space-y-4 animate-slide-up pb-6">
-      <div className="pt-2">
+    <div className="space-y-4 animate-slide-up pb-24 overflow-y-auto h-[calc(100vh-4rem)] scrollbar-hide">
+      <div className="pt-2 px-1">
         <h2 className="text-xl font-bold text-text-primary mb-1 flex items-center gap-2">
           <Globe className="text-blue-medium" size={22} /> Keşfet
         </h2>
@@ -56,22 +71,22 @@ export default function Discover() {
         </p>
       </div>
 
-      {loading ? (
+      {loading && page === 1 ? (
         <div className="flex flex-col items-center justify-center py-20 gap-3">
           <Loader2 size={32} className="text-blue-medium animate-spin" />
           <p className="text-sm text-text-muted">İlanlar CV'inle eşleştiriliyor...</p>
         </div>
       ) : (
-        <div className="space-y-3">
+        <div className="space-y-3 px-1">
           {jobs.map((job) => (
-            <div key={job.id} className="glass-card p-4 space-y-3">
+            <div key={`${job.id}-${Math.random()}`} className="glass-card p-4 space-y-3">
               {/* Üst satır: Logo + Başlık + Skor */}
               <div className="flex items-start justify-between gap-3">
                 <div className="flex items-start gap-3 min-w-0">
                   <img 
-                    src={`https://ui-avatars.com/api/?name=${encodeURIComponent(job.company)}&background=random&color=fff&size=40&rounded=true&bold=true`}
+                    src={job.logo || `https://ui-avatars.com/api/?name=${encodeURIComponent(job.company)}&background=random&color=fff&size=40`}
                     alt={job.company}
-                    className="w-10 h-10 rounded-lg shadow-sm shrink-0"
+                    className="w-10 h-10 rounded-lg shadow-sm shrink-0 object-contain bg-white"
                   />
                   <div className="min-w-0">
                     <h3 className="text-sm font-bold text-text-primary leading-tight">{job.title}</h3>
@@ -109,19 +124,23 @@ export default function Discover() {
                 rel="noopener noreferrer"
                 className="flex items-center justify-center gap-2 w-full py-2 text-xs font-semibold text-blue-deep bg-blue-soft/15 hover:bg-blue-soft/30 rounded-xl transition-colors border border-blue-soft/30"
               >
-                <ExternalLink size={13} /> İlana Git (Kariyer.net / LinkedIn)
+                <ExternalLink size={13} /> İlana Git
               </a>
             </div>
           ))}
+          
           {/* Daha Fazla Yükle Butonu */}
           <button
-            onClick={() => {
-              setJobs([])
-              setCachedDiscover(null)
-            }}
-            className="w-full py-3 mt-4 rounded-xl font-semibold text-sm text-blue-deep bg-blue-soft/20 hover:bg-blue-soft/40 transition-colors border border-blue-soft/30"
+            onClick={() => setPage(p => p + 1)}
+            disabled={loading}
+            className="w-full py-4 mt-2 mb-8 rounded-xl font-semibold text-sm text-white flex items-center justify-center gap-2 transition-all shadow-sm"
+            style={{ background: loading ? '#94a3b8' : 'linear-gradient(135deg, #3b82f6, #2dd4bf)' }}
           >
-            Daha Fazla İlan Bul
+            {loading ? (
+              <span className="animate-spin w-4 h-4 border-2 border-white/40 border-t-white rounded-full" />
+            ) : (
+              'Daha Fazla İlan Bul'
+            )}
           </button>
         </div>
       )}
