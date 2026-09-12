@@ -33,13 +33,20 @@ async def interview_coach(file: UploadFile = File(...), position: str = Form(...
     return APIResponse(**result)
 
 
+# ==============================================================================
+# SKILL GAP (YETENEK AÇIĞI) ANALİZİ UÇ NOKTASI (ADIM 4)
+# ==============================================================================
+# HATA NOTU VE DÜZELTME (NameError: Header is not defined -> 502 Bad Gateway):
+# Bu uç nokta eklenirken parametreye 'authorization: str = Header(None)' yazıldı,
+# ancak dosya başındaki 'from fastapi import ...' kısmına 'Header' eklenmesi unutuldu.
+# Sunucu derleme anında patladı ve 502 hatası verdi. 'Header' import edilerek düzeltildi.
 @router.get("/skill-gap", response_model=APIResponse)
 async def skill_gap_analysis(authorization: str = Header(None)):
     """Kullanıcının CV yeteneklerini piyasa gereksinimleriyle kıyaslar."""
     if not authorization:
         return _mock_skill_gap("Kişisel analiz için Profil sekmesinden CV'ni eklemeli ve giriş yapmalısın.")
 
-    # 1. Token'dan user id al
+    # 1. Token'dan user id al (JWT Payload çözümlenmesi)
     token = authorization.replace("Bearer ", "")
     user_id = None
     try:

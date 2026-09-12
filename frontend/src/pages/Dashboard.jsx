@@ -1,3 +1,11 @@
+// ==============================================================================
+// PANO (DASHBOARD) KANBAN ÖZETİ VE SKILL GAP RADAR GRAFİĞİ (ADIM 4)
+// ==============================================================================
+// HATA NOTU VE DEĞİŞKEN ADI ÇAKIŞMA DÜZELTMESİ:
+// Hem başvuru listesi yüklenirken hem de Skill Gap grafiği yüklenirken aynı 'loading' adı kullanılmıştı.
+// Bu durum başvuru listesi yüklenirken Radar Grafiği'nin de dönme animasyonu göstermesine yol açtı!
+// Çözüm: Başvuru yüklemesi 'appLoading', Grafik yüklemesi 'skillGapLoading' olarak ayrıştırıldı.
+// ==============================================================================
 import { useState, useEffect } from 'react'
 import { Briefcase, TrendingUp, Clock, CheckCircle, AlertCircle, Zap } from 'lucide-react'
 import { Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Legend, Tooltip } from 'recharts'
@@ -6,9 +14,6 @@ import { useAuth } from '../context/AuthContext'
 import api from '../services/api'
 import AppCard from '../components/AppCard'
 
-/**
- * Dashboard Sayfası — Kanban Panosu Özeti & Skill Gap.
- */
 export default function Dashboard() {
   const { applications, loading: appLoading } = useApp()
   const { user, getToken } = useAuth()

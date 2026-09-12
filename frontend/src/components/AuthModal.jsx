@@ -1,3 +1,10 @@
+// ==============================================================================
+// HATA NOTU VE GÖRSEL TASARIM ÇÖZÜMÜ (createPortal & CSS Stacking Context):
+// Giriş/Kayıt modal penceresi ilk yazıldığında üst bileşenin 'overflow: hidden' kuralı
+// yüzünden ekrana sığmamış ve kenarları kesilip görünmez olmuştu.
+// Çözüm: React 'createPortal' kullanılarak modal doğrudan <body> etiketine bağlandı.
+// Böylece DOM hiyerarşisinden bağımsız, ekranın tam ortasında sorunsuz açılması sağlandı.
+// ==============================================================================
 import { useState } from 'react'
 import { createPortal } from 'react-dom'
 import { X, Mail, Lock, Eye, EyeOff, LogIn, UserPlus } from 'lucide-react'

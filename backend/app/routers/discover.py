@@ -137,6 +137,20 @@ def _extract_user_id(authorization: str) -> str:
     except Exception:
         raise HTTPException(status_code=401, detail="Token çözümlenemedi.")
 
+# ==============================================================================
+# İLAN KEŞFETME MİMARİSİ VE YAPAY ZEKA SKORLAMASI (ADIM 3)
+# ==============================================================================
+# MİMARİ KARAR VE ÇÖZÜLEN SORUNLAR:
+# 1. Sahte İlan ve Kırık URL Sorunu: İlk başta Groq AI'dan sıfırdan ilan üretmesi istendi. 
+#    Ancak AI 'XYZ Hukuk Bürosu' gibi uydurma isimler üretti ve yönlendirdiği bağlantılar çalışmadı.
+#    Çözüm: 'REAL_JOBS' veri tabanı oluşturuldu (Trendyol, Koç, Garanti vb. gerçek ilanlar).
+#    Groq AI artık ilan UYDURMUYOR, bu gerçek ilanları kullanıcının CV'si ile KIYASLAYIP PUANLIYOR.
+#
+# 2. Groq Tool Calling Hatası ('Tool choice is required...'):
+#    LangChain'in 'with_structured_output' metodu modellerden araç (tool) çağırmasını bekler.
+#    Groq modeli bu altyapıyı desteklemediği için uygulama patladı.
+#    Çözüm: 'JsonOutputParser' ile ham metinden doğrudan JSON ayrıştırmaya geçildi.
+
 @router.get("/jobs", response_model=APIResponse)
 async def discover_jobs(authorization: str = Header(None), page: int = 1):
     """Kullanıcının CV'sine göre veritabanındaki GERÇEK ilanları skorlayıp döner."""
@@ -159,7 +173,6 @@ async def discover_jobs(authorization: str = Header(None), page: int = 1):
         return {"success": True, "data": [], "message": "CV bulunamadı.", "is_mock": False}
 
     # 2. AI'dan TÜM ilanları bu CV için skorlamasını ve kısaca nedenini yazmasını iste.
-    # Tüm 15 ilanı tek seferde AI'a verip skorlatmak yerine, JSON mode ile sadece ID ve skor istiyoruz.
     try:
         from langchain_groq import ChatGroq
         from langchain_core.output_parsers import JsonOutputParser

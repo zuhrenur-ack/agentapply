@@ -1,3 +1,11 @@
+// ==============================================================================
+// UYGULAMA GENELİ STATE YÖNETİMİ VE GLOBAL ÖNBELLEKLEME (CACHE)
+// ==============================================================================
+// PERFORMANS ÇÖZÜMÜ (Sekme Geçişlerinde Sıfırdan Yüklenme Sorunu):
+// Keşfet ve Profil sayfaları her açıldığında API'ye tekrar istek atıp ekranı bekletiyordu.
+// 'cachedCV' ve 'cachedDiscover' global değişkenleri ile veriler React Context seviyesinde saklandı.
+// Kullanıcı sekmeler arasında gezindiğinde veriler milisaniyelik hızla ekrana gelmektedir.
+// ==============================================================================
 import { createContext, useContext, useState, useCallback, useEffect } from 'react'
 import { applicationAPI } from '../services/api'
 

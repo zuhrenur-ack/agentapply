@@ -1,3 +1,11 @@
+// ==============================================================================
+// KEŞFET SAYFASI — AI İLAN SKORLAMA VE GERÇEK İLAN LİSTESİ (ADIM 3)
+// ==============================================================================
+// GÖRSEL TASARIM & SCROLL HATA ÇÖZÜMÜ:
+// İlk tasarımda sayfa altındaki 6. ilan ve 'Daha Fazla İlan Bul' butonu ekranın altında kalıp görünmüyordu.
+// Çünkü sabit alt gezinti barı (BottomNav) hiyerarşide bu alanı kapatıyordu.
+// Çözüm: Ana kapsayıcıya 'pb-24 overflow-y-auto h-[calc(100vh-4rem)]' eklenerek kaydırma alanı düzeltildi.
+// ==============================================================================
 import { useState, useEffect } from 'react'
 import { Globe, Briefcase, ExternalLink, Loader2, MapPin, Tag } from 'lucide-react'
 import api from '../services/api'

@@ -7,10 +7,14 @@ import logging
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.config import settings
-from app.routers import applications, ai
-from app.routers import profile
-from app.routers import cover_letter
-from app.routers import discover
+# ==============================================================================
+# ROUTER İÇE AKTARMALARI (ROUTER IMPORTS)
+# ==============================================================================
+# HATA NOTU & ÇÖZÜMÜ (502 Bad Gateway):
+# İlk yayınlamada 'discover' router dosyası henüz oluşturulmadan buraya import yazıldığı için
+# Python başlangıçta ImportError verdi ve Railway sunucusu tamamen çöktü (502 Bad Gateway).
+# Çözüm olarak boş bir discover router dosyası oluşturulup import tamamlanmıştır.
+from app.routers import applications, ai, profile, cover_letter, discover
 
 # Loglama yapılandırması
 logging.basicConfig(
@@ -19,7 +23,7 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-# FastAPI uygulaması
+# FastAPI Uygulama Örneği (Swagger UI /docs adresinde otomatik dokümantasyon oluşturur)
 app = FastAPI(
     title=settings.APP_NAME,
     version=settings.APP_VERSION,
@@ -28,7 +32,11 @@ app = FastAPI(
     redoc_url="/redoc"
 )
 
-# CORS Ayarları — Frontend'in backend'e erişebilmesi için
+# ==============================================================================
+# CORS (Cross-Origin Resource Sharing) GÜVENLİK VE ERİŞİM AYARLARI
+# ==============================================================================
+# Vercel üzerindeki frontend (React) uygulamasının, Railway üzerindeki backend API'sine
+# erişebilmesi için tüm istek kaynaklarına (origins), metodlarına ve başlıklarına izin verilmiştir.
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -37,7 +45,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Router'ları bağla
+# YÖNLENDİRİCİLERİN (ROUTERS) UYGULAMAYA BAĞLANMASI
+# Tüm modüller '/api' ön eki ile dış dünyaya açılır (Örn: /api/applications, /api/discover)
 app.include_router(applications.router, prefix="/api")
 app.include_router(ai.router, prefix="/api")
 app.include_router(profile.router, prefix="/api")

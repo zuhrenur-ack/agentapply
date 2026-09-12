@@ -1,3 +1,9 @@
+# HATA NOTU VE KÜTÜPHANE DEĞİŞİKLİĞİ (PyMuPDF -> pypdf):
+# İlk başta PDF ayıklama için 'PyMuPDF' (fitz) kütüphanesi kullanılmıştı.
+# Ancak PyMuPDF C/C++ derleyicisi gerektirdiği için Railway platformunda build (derleme) hatası verdi:
+# 'ERROR: Failed building wheel for PyMuPDF'
+# Çözüm: Saf Python (pure Python) ile yazılmış olan 'pypdf' kütüphanesine geçildi. 
+# Derleme gerektirmediği için Railway ortamında sorunsuz çalışmıştır.
 from pypdf import PdfReader
 import logging
 from fastapi import UploadFile

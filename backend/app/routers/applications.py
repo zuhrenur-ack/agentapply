@@ -11,6 +11,12 @@ router = APIRouter(prefix="/applications", tags=["Başvurular"])
 service = ApplicationService()
 
 
+# HATA NOTU VE KRİTİK DÜZELTME (307 Temporary Redirect & CORS):
+# İlk başta uç noktalar @router.get("/") ve @router.post("/") şeklinde eğik çizgi ile yazılmıştı.
+# Ancak frontend '/applications' (eğik çizgisiz) istek atıyordu. FastAPI isteği '/' eklemek için 307 yönlendirmesi yaptı.
+# Tarayıcılar CORS güvenlik kısıtlaması nedeniyle POST yönlendirmelerini engellediği için başvuru kaydetme tamamen çöktü!
+# Çözüm: Eğik çizgiler kaldırıldı -> @router.get("") ve @router.post("") yapıldı.
+
 @router.get("", response_model=APIResponse)
 async def get_applications():
     """Tüm başvuruları listeler."""
